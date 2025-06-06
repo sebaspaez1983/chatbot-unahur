@@ -1,24 +1,27 @@
 from flask import Flask, request, jsonify
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import os
+import json
 
 app = Flask(__name__)
 
-# Configuración para acceder a Google Sheets
+# Autenticación desde variable de entorno
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-credentials = ServiceAccountCredentials.from_json_keyfile_name('credenciales.json', scope)
+cred_json = os.environ.get('GOOGLE_CREDENTIALS')
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(cred_json), scope)
 client = gspread.authorize(credentials)
 
-# Abrir la hoja de cálculo
-spreadsheet = client.open("BaseChatbot")  # Asegurate que este sea el nombre exacto
+# Abrir la hoja
+spreadsheet = client.open("BaseChatbot")  # <- Este debe coincidir con el nombre real de tu Google Sheet
 sheet = spreadsheet.sheet1
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     req = request.get_json()
     intent = req['queryResult']['intent']['displayName']
-    
-    respuesta = "Lo siento, no tengo esa información ahora."
+
+    respuesta = "Lo siento, no tengo una respuesta en este momento."
     rows = sheet.get_all_records()
 
     for row in rows:
@@ -30,3 +33,4 @@ def webhook():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
