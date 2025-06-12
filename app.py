@@ -53,7 +53,10 @@ def webhook():
             if row['Intencion'] == intent:
                 respuesta = row['Respuesta']
                 break
-    
+    print("Intent:", intent)
+    print("Entidad asunto_materia:", entity_value)
+    print("Datos recibidos:", req)
+
     # --- FIN DE LA MODIFICACIÓN ---
 
     return jsonify({'fulfillmentText': respuesta})
