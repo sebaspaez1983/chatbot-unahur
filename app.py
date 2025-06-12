@@ -18,46 +18,47 @@ spreadsheet = client.open("BaseChatbot")
 sheet = spreadsheet.sheet1
 # -----------------------------
 
+import json # Asegúrate de que esta línea esté al principio de tu archivo
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    # Se recomienda usar silent=True y force=True para mayor robustez
     req = request.get_json(silent=True, force=True)
-    
-    # 1. Extraer la intención (esto sigue igual)
+
+    # --- LÍNEAS DE DEPURACIÓN ---
+    # Imprimimos en los logs de Render para ver exactamente qué llega
+    print("--- INICIO DE LA PETICIÓN ---")
+    print(f"Petición JSON completa: {json.dumps(req, indent=2)}")
+    # ---------------------------
+
     intent = req['queryResult']['intent']['displayName']
-
-    # --- INICIO DE LA MODIFICACIÓN ---
-
-    # 2. Extraer el VALOR DE LA ENTIDAD de los parámetros de Dialogflow.
-    # El nombre del parámetro ('asunto_materia') debe coincidir EXACTAMENTE
-    # con el nombre de tu entidad en Dialogflow.
-    # Usamos .get() para que no de error si un intent no tiene esta entidad.
+    # Usamos el nombre que ya verificamos que es correcto
     entity_value = req['queryResult']['parameters'].get('asunto_materia', None)
-    
-    # ---------------------------------
+
+    # --- MÁS LÍNEAS DE DEPURACIÓN ---
+    print(f"Intención detectada: {intent}")
+    print(f"Parámetros recibidos: {req['queryResult']['parameters']}")
+    print(f"Valor de entidad extraído ('asunto_materia'): {entity_value}")
+    print("--- FIN DE LA PETICIÓN ---")
+    # -----------------------------
 
     respuesta = "Lo siento, no tengo una respuesta en este momento."
     rows = sheet.get_all_records()
 
-    # 3. Búsqueda modificada: ahora considera la entidad
     for row in rows:
-        # ESCENARIO 1: Si el intent viene con nuestra entidad (ej: consultar_info_materias)
         if entity_value:
-            # La condición ahora es DOBLE: debe coincidir la intención Y el valor de la entidad
-            if row['Intencion'].strip().lower() == intent.strip().lower() and  row['Valor_entidad'].strip().lower() == entity_value.strip().lower():
+            if row['Intencion'] == intent and row['Valor_entidad'] == entity_value:
                 respuesta = row['Respuesta']
                 break
-        # ESCENARIO 2: Si el intent NO tiene la entidad (ej: un saludo o despedida)
         else:
-            # La lógica vuelve a ser la de antes, solo busca por intención
-            if row['Intencion'].strip().lower() == intent.strip().lower():
+            if row['Intencion'] == intent:
                 respuesta = row['Respuesta']
                 break
-    
-    # --- FIN DE LA MODIFICACIÓN ---
+
+    # Una última línea de depuración antes de responder
+    print(f"Respuesta final que se enviará: {respuesta}")
 
     return jsonify({'fulfillmentText': respuesta})
-
+    
 if __name__ == '__main__':
     # Se recomienda obtener el puerto de una variable de entorno para Render
     port = int(os.environ.get('PORT', 8080))
