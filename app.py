@@ -40,7 +40,11 @@ def find_faq_response(df, intent, params):
     filtered_df = df[df['intencion'] == intent]
 
     for entity_name, entity_value in params.items():
-        if entity_value and entity_name in filtered_df.columns:
+        if entity_name in filtered_df.columns and entity_value:
+            # Si es lista, usá el primer valor
+            if isinstance(entity_value, list):
+                entity_value = entity_value[0]
+
             filtered_df = filtered_df.dropna(subset=[entity_name])
             filtered_df = filtered_df[filtered_df[entity_name] == entity_value]
 
